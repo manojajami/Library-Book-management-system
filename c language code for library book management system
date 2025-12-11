@@ -1,0 +1,177 @@
+#include <stdio.h>
+#include <string.h>
+
+struct Book {
+    int id;
+    char title[50];
+    char author[50];
+    int quantity;
+};
+
+struct Issue {
+    int bookId;
+    char student[50];
+    int days;
+};
+
+struct Book books[100];
+int bookCount = 0;
+
+void saveBooksToFile() {
+    FILE *fp = fopen("books.txt", "w");
+    for (int i = 0; i < bookCount; i++) {
+        fprintf(fp, "%d %s %s %d\n", books[i].id, books[i].title,
+                books[i].author, books[i].quantity);
+    }
+    fclose(fp);
+}
+
+void loadBooksFromFile() {
+    FILE *fp = fopen("books.txt", "r");
+    if (fp == NULL) return;
+
+    bookCount = 0;
+    while (fscanf(fp, "%d %s %s %d", 
+                  &books[bookCount].id,
+                  books[bookCount].title,
+                  books[bookCount].author,
+                  &books[bookCount].quantity) != EOF) {
+        bookCount++;
+    }
+    fclose(fp);
+}
+
+void addBook() {
+    printf("\nEnter Book ID: ");
+    scanf("%d", &books[bookCount].id);
+
+    printf("Enter Title: ");
+    scanf("%s", books[bookCount].title);
+
+    printf("Enter Author: ");
+    scanf("%s", books[bookCount].author);
+
+    printf("Enter Quantity: ");
+    scanf("%d", &books[bookCount].quantity);
+
+    bookCount++;
+    saveBooksToFile();
+
+    printf("\nBook Added Successfully!\n");
+}
+
+void displayStock() {
+    printf("\n---- Available Books ----\n");
+    for (int i = 0; i < bookCount; i++) {
+        printf("ID: %d  Title: %s  Author: %s  Quantity: %d\n",
+               books[i].id, books[i].title, books[i].author, books[i].quantity);
+    }
+}
+
+void issueBook() {
+    int id, found = -1;
+
+    printf("\nEnter Book ID to Issue: ");
+    scanf("%d", &id);
+
+    for (int i = 0; i < bookCount; i++) {
+        if (books[i].id == id) {
+            found = i;
+            break;
+        }
+    }
+
+    if (found == -1) {
+        printf("\nBook Not Found!\n");
+        return;
+    }
+
+    if (books[found].quantity == 0) {
+        printf("\nBook Out of Stock!\n");
+        return;
+    }
+
+    char student[50];
+    printf("Enter Student Name: ");
+    scanf("%s", student);
+
+    FILE *fp = fopen("issued.txt", "a");
+
+    fprintf(fp, "%d %s\n", id, student);
+    fclose(fp);
+
+    books[found].quantity--;
+    saveBooksToFile();
+
+    printf("\nBook Issued Successfully!\n");
+}
+
+void returnBook() {
+    int id, found = -1;
+
+    printf("\nEnter Book ID to Return: ");
+    scanf("%d", &id);
+
+    for (int i = 0; i < bookCount; i++) {
+        if (books[i].id == id) {
+            found = i;
+            break;
+        }
+    }
+
+    if (found == -1) {
+        printf("\nInvalid Book ID!\n");
+        return;
+    }
+
+    int days;
+    printf("Enter Number of Days Book was Taken: ");
+    scanf("%d", &days);
+
+    int fine = 0;
+
+    if (days > 14) {
+        int extra = days - 14;
+
+        // Fine calculation using loop
+        for (int i = 0; i < extra; i++) {
+            fine += 2; // ₹2 fine per day
+        }
+    }
+
+    books[found].quantity++;
+    saveBooksToFile();
+
+    printf("\nBook Returned Successfully!\n");
+    printf("Fine Amount = ₹%d\n", fine);
+}
+
+int main() {
+    int choice;
+    loadBooksFromFile();
+
+    while (1) {
+        printf("\n---- Library Book Management System ----\n");
+        printf("1. Add Book\n");
+        printf("2. Issue Book\n");
+        printf("3. Return Book\n");
+        printf("4. Display Stock\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1: addBook(); break;
+            case 2: issueBook(); break;
+            case 3: returnBook(); break;
+            case 4: displayStock(); break;
+            case 5: 
+                printf("\nExiting... Thank you!\n");
+                return 0;
+            default:
+                printf("\nInvalid Choice! Try Again.\n");
+        }
+    }
+
+    return 0;
+}
